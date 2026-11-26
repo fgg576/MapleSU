@@ -1,5 +1,9 @@
-name: Build MapleSU Manager
+name: Build Manager
 on: workflow_dispatch
+
+env:
+  ANDROID_HOME: /usr/local/lib/android/sdk
+  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
 
 jobs:
   build:
@@ -12,25 +16,20 @@ jobs:
           distribution: temurin
           java-version: '21'
           
-      - uses: android-actions/setup-android@v3
-      
       - name: Install Android SDK packages
         run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager "platforms;android-37" "build-tools;37.0.0" "ndk;26.1.10909125" "cmake;3.22.1"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;26.1.10909125" "cmake;3.22.1"
           
       - name: Set up Rust
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.99.1
-          rustup target add --toolchain 1.99.1 aarch64-linux-android
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          rustup target add aarch64-linux-android
           
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
           
-      - name: Install Python deps
-        run: pip install -r requirements-native.txt
-        
       - name: Build Debug APK
         run: |
           chmod +x gradlew
