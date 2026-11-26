@@ -39,28 +39,26 @@ jobs:
       - name: Install Python dependencies
         run: pip install -r requirements-native.txt
 
-      - name: Patch Python scripts
+      - name: Patch Python scripts & Fix python alias
         run: |
-          # 干掉身份验证脚本
+          # 1. 解决找不到 python 命令的问题
+          sudo ln -sf $(which python3) /usr/local/bin/python
+          
+          # 2. 干掉身份验证脚本
           echo "import sys" > scripts/sync-ultra-sdk-identity.py
           echo "sys.exit(0)" >> scripts/sync-ultra-sdk-identity.py
           
-          # 用 Python 精准修改原作者报错的脚本
+          # 3. 精准修改原作者报错的脚本
           python -c "
           import os
           path = 'manager/src/main/cpp/build_providers.py'
           if os.path.exists(path):
               with open(path, 'r', encoding='utf-8') as f:
                   content = f.read()
-              # 把 Windows 的 .bat 后缀删掉
               content = content.replace('apkanalyzer.bat', 'apkanalyzer')
-              # 把 check=True 强行换成 check=False，不让它中断
               content = content.replace('check=True', 'check=False')
               with open(path, 'w', encoding='utf-8') as f:
                   f.write(content)
-              print('Successfully patched build_providers.py')
-          else:
-              print('File not found, skipping patch')
           "
           
       - name: Build Debug APK
