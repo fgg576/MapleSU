@@ -10,7 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+        with:
+          submodules: recursive  # 关键：拉取项目包含的子模块
+          fetch-depth: 0
+          
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -23,12 +26,17 @@ jobs:
           
       - name: Set up Rust
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-          rustup target add aarch64-linux-android
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.99.1
+          source "$HOME/.cargo/env"
+          rustup target add --toolchain 1.99.1 aarch64-linux-android
           
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r requirements-native.txt  # 关键：安装原项目需要的 Python 依赖
           
       - name: Build Debug APK
         run: |
